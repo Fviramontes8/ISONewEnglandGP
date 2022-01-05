@@ -12,7 +12,7 @@ import SignalProcessor as sp
 
 # Graphs with PyTorch data
 import torch
-import GPyTorchUtilities as gptu
+import GPyTorchUtils as gptu
 
 def PlotMTGPPred(XCompare, YCompare, XPred, YPred, Xtitle="", Ytitle="", Title="", TasksTitle=""):
 	with torch.no_grad():

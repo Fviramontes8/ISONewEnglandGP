@@ -30,6 +30,15 @@ or
 
     conda install numpy
 
+### Pandas
+For reading in the [source data](https://www.iso-ne.com/isoexpress/web/reports/load-and-demand/-/tree/zone-info)
+
+    pip3 install pandas
+
+or
+
+    conda install pandas
+
 ### Matplotlib
 For plotting data
 

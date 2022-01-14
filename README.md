@@ -57,6 +57,14 @@ or
 
     conda install matplotlib
 
+### Scikit-learn
+
+    pip3 install scikit-learn
+
+or
+
+    conda install scikit-learn
+
 ### PyTorch
 For creating tensors and to use with GPyTorch
 

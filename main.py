@@ -20,6 +20,14 @@ def plot_ISO_features(feature_data, feature_descriptions, feature_units):
     ): 
         pu.general_plot(data, description, "Time (Hours)", units)
     
+def torch_train_test_split(data, ratio):
+    cutoff_idx = int(len(data) * ratio)
+    train_y = torch.tensor(data[:cutoff_idx])
+    test_y = torch.tensor(data[cutoff_idx:])
+    train_x = torch.linspace(0, cutoff_idx, cutoff_idx)
+    test_x = torch.linspace(cutoff_idx, len(data), len(data)-cutoff_idx)
+
+    return train_x, train_y, test_x, test_y
 
 # Global variables are bad, m'kay?
 def main():
@@ -46,9 +54,8 @@ def main():
 
     train_x, train_y, test_x, test_y = torch_train_test_split(
         feature_data[0], 
-        0.5
+        0.8
     )
-    
 
 if __name__ == "__main__":
     main()

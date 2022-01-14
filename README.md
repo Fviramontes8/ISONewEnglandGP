@@ -39,6 +39,15 @@ or
 
     conda install pandas
 
+### Scipy
+For use in butterworth filter
+
+    pip3 install scipy
+
+or
+
+    conda install scipy
+
 ### Matplotlib
 For plotting data
 

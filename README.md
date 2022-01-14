@@ -39,6 +39,11 @@ or
 
     conda install pandas
 
+### Xlrd
+For reading in xls files with pandas
+
+    conda install xlrd
+
 ### Scipy
 For use in butterworth filter
 

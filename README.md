@@ -16,82 +16,22 @@ More specifically, the following files are being analyzed:
   - 2012 SMD Hourly Data
   - 2011 SMD Hourly Data
 
-## Dependancies (installing with conda is recommended)
+## Dependencies 
 
-### Numpy
-For numerical computations
+### GPU version
 
+A conda environment can be created with the following conda command:
 
-    pip3 install numpy
+    conda env create -f gpu_environment.yml
 
+If you want to update your current environment with these dependencies run the following conda command:
 
-or
+    conda env update --prefix ./env --file gpu_environment.yml --prune
 
+### CPU version
 
-    conda install numpy
+    conda env create -f cpu_environment.yml
 
-### Pandas
-For reading in the [source data](https://www.iso-ne.com/isoexpress/web/reports/load-and-demand/-/tree/zone-info)
+If you want to update your current environment with these dependencies run the following conda command:
 
-    pip3 install pandas
-
-or
-
-    conda install pandas
-
-### Xlrd
-For reading in xls files with pandas
-
-    conda install xlrd
-
-### Scipy
-For use in butterworth filter
-
-    pip3 install scipy
-
-or
-
-    conda install scipy
-
-### Matplotlib
-For plotting data
-
-    pip3 install matplotlib
-
-or
-
-    conda install matplotlib
-
-### Scikit-learn
-
-    pip3 install scikit-learn
-
-or
-
-    conda install scikit-learn
-
-### PyTorch
-For creating tensors and to use with GPyTorch
-
-It is recommend to [go to the PyTorch website for the most up-to-date information on installing PyTorch](https://pytorch.org)
-#### GPU
-
-    pip3 install torch torchvision
-
-or
-
-    conda install pytorch torchvision cuda=XX.X -c pytorch
-
-Where `XX.X` is a CUDA version (e.g. 9.2, 10.1, 10.2, 11.3)
-
-#### CPU
-
-    pip3 install torch==1.10.1+cpu torchvision==0.11.2+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
-
-or
-
-    conda install pytorch torchvision cpuonly -c pytorch
-
-### GPyTorch
-
-    pip install gpytorch
+    conda env update --prefix ./env --file cpu_environment.yml --prune

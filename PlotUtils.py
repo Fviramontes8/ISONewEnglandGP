@@ -55,31 +55,31 @@ def PlotMTGPPred(XCompare, YCompare, XPred, YPred, Xtitle="", Ytitle="", Title="
 
 def PlotGPPred(XCompare, YCompare, XPred, YPred, Xtitle="", Ytitle="", Title=""):
 	with torch.no_grad():
-		fig, ax = plt.subplots(1, 1, figsize = (8, 6))
+		#fig, ax = plt.subplots(1, 1, figsize = (8, 6))
 		lower_sigma, upper_sigma = YPred.confidence_region()
 
 		sigma1_lower, sigma1_upper = gptu.ToStdDev1(YPred)
 
-		ax.plot(XCompare.numpy(), YCompare.numpy(), "k")
-		ax.plot(XPred.numpy(), YPred.mean.numpy(), "b")
-		ax.fill_between(
+		plt.plot(XCompare.numpy(), YCompare.numpy(), "k")
+		plt.plot(XPred.numpy(), YPred.mean.numpy(), "b")
+		plt.fill_between(
 			XPred.numpy(),
 			lower_sigma.numpy(),
 			upper_sigma.numpy(),
 			alpha = 0.5
 		)
 
-		ax.fill_between(
+		plt.fill_between(
 			XPred.numpy(),
 			sigma1_lower,
 			sigma1_upper,
 			alpha = 0.5
 		)
 
-		ax.set_xlabel(Xtitle)
-		ax.set_ylabel(Ytitle)
-		ax.set_title(Title)
-		ax.legend(
+		plt.xlabel(Xtitle)
+		plt.ylabel(Ytitle)
+		plt.title(Title)
+		plt.legend(
 			[
 				"Observed Data", 
 				"Prediction Mean", 

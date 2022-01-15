@@ -26,7 +26,9 @@ A conda environment can be created with the following conda command:
 
 If you want to update your current environment with these dependencies run the following conda command:
 
-    conda env update --prefix ./env --file gpu_environment.yml --prune
+    conda env update --name CUSTOM_ENV_NAME --file gpu_environment.yml --prune
+
+Where `CUSTOM_ENV_NAME` is *YOUR* environment name
 
 ### CPU version
 
@@ -34,4 +36,6 @@ If you want to update your current environment with these dependencies run the f
 
 If you want to update your current environment with these dependencies run the following conda command:
 
-    conda env update --prefix ./env --file cpu_environment.yml --prune
+    conda env update --name CUSTOM_ENV_NAME --file gpu_environment.yml --prune
+
+Where `CUSTOM_ENV_NAME` is *YOUR* environment name

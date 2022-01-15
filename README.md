@@ -28,7 +28,7 @@ If you want to update your current environment with these dependencies run the f
 
     conda env update --name CUSTOM_ENV_NAME --file gpu_environment.yml --prune
 
-Where `CUSTOM_ENV_NAME` is *YOUR* environment name
+Where `CUSTOM_ENV_NAME` is *YOUR* environment name, make sure to type `conda activate CUSTOM_ENV_NAME` for the updates to take effect.
 
 ### CPU version
 
@@ -38,4 +38,4 @@ If you want to update your current environment with these dependencies run the f
 
     conda env update --name CUSTOM_ENV_NAME --file gpu_environment.yml --prune
 
-Where `CUSTOM_ENV_NAME` is *YOUR* environment name
+Where `CUSTOM_ENV_NAME` is *YOUR* environment name, make sure to type `conda activate CUSTOM_ENV_NAME` for the updates to take effect.

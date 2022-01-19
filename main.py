@@ -32,11 +32,12 @@ def torch_train_test_split(data, ratio):
 # Global variables are bad, m'kay?
 def main():
     NH_data = read_xls("xls_data/2011_smd_hourly.xls", "NH")
+    data_cutoff = (24 * 8)
     feature_data = np.array(
         [
-            NH_data["DEMAND"], 
-            NH_data["DryBulb"], 
-            NH_data["DewPnt"]
+            NH_data["DEMAND"][:data_cutoff], 
+            NH_data["DryBulb"][:data_cutoff], 
+            NH_data["DewPnt"][:data_cutoff]
         ]
     )
     feature_description = [
@@ -50,12 +51,30 @@ def main():
         "Temperature (Fahrenheit)"
     ]
 
-    plot_ISO_features(feature_data, feature_description, feature_units)
+    #plot_ISO_features(feature_data, feature_description, feature_units)
 
-    train_x, train_y, test_x, test_y = torch_train_test_split(
-        feature_data[0], 
-        0.8
-    )
+    for feats in feature_data:
+        train_x, train_y, test_x, test_y = torch_train_test_split(
+            feats, 
+            0.8
+        )
+    
+        likelihood = gpytorch.likelihoods.GaussianLikelihood()
+        gp_model = gptu.RBFGPModel(train_x, train_y, likelihood)
+        optimizer = torch.optim.Adam(
+            [
+                {"params" : gp_model.parameters()},
+            ],
+            lr = 0.1
+        )
+    
+        gptu.TorchTrain(train_x, train_y, gp_model, likelihood, optimizer, 200)
+        #pred = gptu.TorchTest(test_x, gp_model, likelihood)
+        pred = gptu.TorchTest(train_x, gp_model, likelihood)
+    
+        plt.plot(train_x, train_y)
+        #pu.PlotGPPred(test_x, test_y, test_x, pred)
+        pu.PlotGPPred(train_x, train_y, train_x, pred)
 
 if __name__ == "__main__":
     main()

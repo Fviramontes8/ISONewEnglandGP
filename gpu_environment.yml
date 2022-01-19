@@ -1,4 +1,4 @@
-name: ISONewEnglandGPU
+name: isogpu
 channels:
   - pytorch
   - defaults

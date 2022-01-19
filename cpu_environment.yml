@@ -1,4 +1,4 @@
-name: ISONewEnglandCPU
+name: isocpu
 channels:
   - pytorch
   - defaults

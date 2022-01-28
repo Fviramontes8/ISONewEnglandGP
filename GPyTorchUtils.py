@@ -8,6 +8,17 @@ Created on Tue Dec 22 16:58:52 2020
 import torch
 import gpytorch
 
+class CustomGPModel(gpytorch.models.ExactGP):
+	def __init__(self, train_x, train_y, likelihood, kernel):
+		super(CustomGPModel, self).__init__(train_x, train_y, likelihood)
+		self.mean_module = gpytorch.means.ConstantMean()
+		self.covar_module = kernel
+
+	def forward(self, x):
+		mean_x = self.mean_module(x)
+		covar_x = self.covar_module(x)
+		return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
 class LinearGPModel(gpytorch.models.ExactGP):
 	def __init__(self, train_x, train_y, likelihood):
 		super(LinearGPModel, self).__init__(train_x, train_y, likelihood)
@@ -52,6 +63,7 @@ def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter):
 		loss = -marginal_log_likelihood(output, Ytr)
 		#print(loss.shape)
 		#print(f"Output shape: {output.mean.shape}")
+		#print(f"Xtr shape: {Xtr.shape}")
 		#print(f"Ytr shape: {Ytr.shape}")
 		loss.backward()
 		

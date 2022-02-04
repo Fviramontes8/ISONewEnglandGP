@@ -46,7 +46,7 @@ class RBFGPModel(gpytorch.models.ExactGP):
 		covar_x = self.covar_module(x)
 		return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
-def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter):
+def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter, Loss=False):
 	GPModel.train()
 	GPLikelihood.train()
 
@@ -54,17 +54,21 @@ def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter):
 		GPLikelihood,
 		GPModel
 	)
+	if Loss:
+		loss_list = []
 
 	for i in range(TrainingIter):
 		GPOptimizer.zero_grad()
 
 		output = GPModel(Xtr)
-
-		loss = -marginal_log_likelihood(output, Ytr)
-		#print(loss.shape)
 		#print(f"Output shape: {output.mean.shape}")
 		#print(f"Xtr shape: {Xtr.shape}")
 		#print(f"Ytr shape: {Ytr.shape}")
+
+		loss = -marginal_log_likelihood(output, Ytr)
+		if Loss:
+			loss_list.append(loss.detach().numpy())
+		#print(loss.shape)
 		loss.backward()
 		
 		print("Iter %03d/%03d - Loss: %.3f\tnoise: %.3f" % (
@@ -75,7 +79,9 @@ def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter):
 
 		GPOptimizer.step()
 
-	return GPModel, GPLikelihood
+	if Loss:
+		return loss_list
+	#return GPModel, GPLikelihood
 
 def TorchTrainMultiFeature(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter):
 	GPModel.train()

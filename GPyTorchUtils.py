@@ -8,6 +8,17 @@ Created on Tue Dec 22 16:58:52 2020
 import torch
 import gpytorch
 
+class CustomGPModel(gpytorch.models.ExactGP):
+	def __init__(self, train_x, train_y, likelihood, kernel):
+		super(CustomGPModel, self).__init__(train_x, train_y, likelihood)
+		self.mean_module = gpytorch.means.ConstantMean()
+		self.covar_module = kernel
+
+	def forward(self, x):
+		mean_x = self.mean_module(x)
+		covar_x = self.covar_module(x)
+		return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
 class LinearGPModel(gpytorch.models.ExactGP):
 	def __init__(self, train_x, train_y, likelihood):
 		super(LinearGPModel, self).__init__(train_x, train_y, likelihood)
@@ -35,7 +46,7 @@ class RBFGPModel(gpytorch.models.ExactGP):
 		covar_x = self.covar_module(x)
 		return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
-def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter):
+def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter, Loss=False):
 	GPModel.train()
 	GPLikelihood.train()
 
@@ -43,16 +54,21 @@ def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter):
 		GPLikelihood,
 		GPModel
 	)
+	if Loss:
+		loss_list = []
 
 	for i in range(TrainingIter):
 		GPOptimizer.zero_grad()
 
 		output = GPModel(Xtr)
+		#print(f"Output shape: {output.mean.shape}")
+		#print(f"Xtr shape: {Xtr.shape}")
+		#print(f"Ytr shape: {Ytr.shape}")
 
 		loss = -marginal_log_likelihood(output, Ytr)
+		if Loss:
+			loss_list.append(loss.detach().numpy())
 		#print(loss.shape)
-		#print(f"Output shape: {output.mean.shape}")
-		#print(f"Ytr shape: {Ytr.shape}")
 		loss.backward()
 		
 		print("Iter %03d/%03d - Loss: %.3f\tnoise: %.3f" % (
@@ -63,7 +79,9 @@ def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter):
 
 		GPOptimizer.step()
 
-	return GPModel, GPLikelihood
+	if Loss:
+		return loss_list
+	#return GPModel, GPLikelihood
 
 def TorchTrainMultiFeature(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter):
 	GPModel.train()

@@ -1,4 +1,3 @@
-import pandas as pd
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -8,9 +7,6 @@ import gpytorch
 
 import PlotUtils as pu
 import GPyTorchUtils as gptu
-
-def read_xls(xls_filename, sheet):
-    return pd.read_excel(xls_filename, sheet_name=sheet)
 
 def plot_ISO_features(feature_data, feature_descriptions, feature_units):
     for data, description, units in zip(
@@ -67,10 +63,10 @@ def one_hour_prediction(input_data):
 
 # Global variables are bad, m'kay?
 def main():
-    NE_data = read_xls("xls_data/2011_smd_hourly.xls", "ISONE CA")
+    NE_data = np.load("data/ISONE_CA_DEMAND.npy")
     data_cutoff = (24 * 12) #192
     feature_data = np.array(
-        NE_data["DEMAND"][:data_cutoff], 
+        NE_data[:data_cutoff], 
     )
     feature_description = "Non-PTF Load Demand" 
     feature_units = "MW"

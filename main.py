@@ -7,6 +7,7 @@ import gpytorch
 
 import PlotUtils as pu
 import GPyTorchUtils as gptu
+import SignalProcessor as sp
 
 def plot_ISO_features(feature_data, feature_descriptions, feature_units):
     for data, description, units in zip(
@@ -162,9 +163,20 @@ def main():
     gp_model.test(test_x)
     for i in range(24):
         print(f"{gp_model.pred[i][0]:.1f} {test2_y[i]}")
+    local_pred = [i for i in gp_model.pred]
 
+    test_x_plot = [i for i in range(24)]
+    plt.plot(test_x_plot, test2_y, label="Actual")
+    plt.plot(test_x_plot, local_pred, label="Predicted")
+    plt.title("Linear Gaussian Process prediction one day ahead")
+    plt.xlabel("Time (hours)")
+    plt.ylabel("Load demand (MW)")
+    plt.legend()
+    plt.show()
+
+    print(f"MAPE: {sp.mape_test(np.array(test2_y), np.array(local_pred)):.3f}")
     #plt.plot(train_x, train_y)
-    #pu.PlotGPPred(test_x, test_y, test_x, pred)
+    #pu.PlotGPPred(test_x, test2_y, test_x, local_pred)
     #pu.PlotGPPred(train_x, train_y, train_x, pred)
 
 if __name__ == "__main__":

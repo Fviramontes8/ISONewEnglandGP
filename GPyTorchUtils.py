@@ -8,6 +8,85 @@ Created on Tue Dec 22 16:58:52 2020
 import torch
 import gpytorch
 
+import matplotlib.pyplot as plt
+
+class OneDayLinearGP():
+    def __init__(self, train_x, train_y_mat, likelihood):
+        self.train_x = train_x
+        self.train_y = train_y_mat
+        self.likelihood = likelihood
+        self.models = [
+            LinearGPModel(train_x, i, likelihood) for i in train_y_mat
+        ]
+
+    def train(self, optimizers, iterations):
+        for i, j, k in zip(self.train_y, self.models, optimizers):
+            TorchTrain(
+                self.train_x, 
+                i, 
+                j, 
+                self.likelihood, 
+                k, 
+                iterations
+            )
+            print("")
+
+    def test(self, test_x):
+        self.pred = [
+            TorchTest(test_x, i, self.likelihood) 
+            for i in self.models
+        ]
+        self.lower_sigma = [
+            i.confidence_region()[0].item()
+            for i in self.pred
+        ]
+        self.upper_sigma = [
+            i.confidence_region()[1].item()
+            for i in self.pred
+        ]
+        self.lower_two_sigma = self.calc_2sigma(
+            self.pred, 
+            self.lower_sigma
+        )
+        self.upper_two_sigma = self.calc_2sigma(
+            self.pred,
+            self.upper_sigma
+        )
+
+
+    def calc_2sigma(self, mean, sigma):
+        two_sigma = [
+            (mu_and_sigma + (1.96 * (mu_and_sigma - mu.mean.numpy()))).item()
+            for mu, mu_and_sigma in zip(mean, sigma)
+        ]
+    
+        return two_sigma
+
+    def plot_pred(self, test_y, title, xlabel, ylabel):
+        x_plot = [i for i in range(len(self.pred))]
+        pred_mean = [i.mean.numpy() for i in self.pred]
+        plt.fill_between(
+            x_plot,
+            self.lower_two_sigma,
+            self.upper_two_sigma,
+            alpha=0.5,
+            label="2 Standard deviations"
+        )
+        plt.fill_between(
+            x_plot,
+            self.lower_sigma,
+            self.upper_sigma,
+            alpha=0.5,
+            label="1 Standard deviation"
+        )
+        plt.plot(x_plot, test_y, label="Actual", color="k")
+        plt.plot(x_plot, pred_mean, label="Predicted", color="b")
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.legend()
+        plt.show()
+
 class CustomGPModel(gpytorch.models.ExactGP):
 	def __init__(self, train_x, train_y, likelihood, kernel):
 		super(CustomGPModel, self).__init__(train_x, train_y, likelihood)
@@ -170,3 +249,12 @@ def verify_confidence_region(YPred, YTrue):
 			sigma2_count += 1
 
 	return sigma1_count/len(YTrue), sigma2_count/len(YTrue)
+
+def confirm_confidence_region(ypred, ytrue, upper_sigma, lower_sigma):
+	sigma_count = 0
+
+	for i in range(len(ypred)):
+		if lower_sigma[i] <= ytrue[i] and upper_sigma[i] >= ytrue[i]:
+			sigma_count += 1
+
+	return sigma_count/len(ytrue)

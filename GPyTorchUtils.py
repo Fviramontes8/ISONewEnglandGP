@@ -87,17 +87,6 @@ class OneDayLinearGP():
         plt.legend()
         plt.show()
 
-class CustomGPModel(gpytorch.models.ExactGP):
-	def __init__(self, train_x, train_y, likelihood, kernel):
-		super(CustomGPModel, self).__init__(train_x, train_y, likelihood)
-		self.mean_module = gpytorch.means.ConstantMean()
-		self.covar_module = kernel
-
-	def forward(self, x):
-		mean_x = self.mean_module(x)
-		covar_x = self.covar_module(x)
-		return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
-
 class LinearGPModel(gpytorch.models.ExactGP):
 	def __init__(self, train_x, train_y, likelihood):
 		super(LinearGPModel, self).__init__(train_x, train_y, likelihood)
@@ -124,6 +113,46 @@ class RBFGPModel(gpytorch.models.ExactGP):
 		mean_x = self.mean_module(x)
 		covar_x = self.covar_module(x)
 		return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
+def torch_one_hour_data_split(data, offset=11, return_y=True):
+    assert(len(data)>48)
+    # Inclusive beginning 
+    begin=0
+    # Exclusive end
+    end=24
+    offset += 24
+
+    train_x = torch.Tensor(data[begin:end]).view(1, 24)
+    train_y = torch.Tensor([data[offset]])
+
+    begin = end
+    end += 24
+    while(end < (len(data) - 48)):
+        train_x = torch.vstack([train_x, torch.Tensor(data[begin:end])])
+        train_y = torch.cat([train_y, torch.Tensor([data[begin+offset]])])
+        begin = end
+        end += 24
+
+    test_x = torch.Tensor(data[begin:end])
+    test_y = torch.Tensor([data[begin+offset]])
+    if return_y:
+        return train_x, train_y, test_x, test_y
+    return train_x, test_x
+
+def torch_one_hour_target_split(data, offset=0):
+    begin=0
+    end=24
+    offset += 24
+    train_y = torch.Tensor([data[offset]])
+
+    begin = end
+    end += 24
+    while(end < (len(data) - 48)):
+        train_y = torch.cat([train_y, torch.Tensor([data[begin+offset]])])
+        begin = end
+        end += 24
+    test_y = torch.Tensor([data[begin+offset]])
+    return train_y, test_y
 
 def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter, Loss=False):
 	GPModel.train()
@@ -160,7 +189,6 @@ def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter, Loss=
 
 	if Loss:
 		return loss_list
-	#return GPModel, GPLikelihood
 
 def TorchTrainMultiFeature(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter):
 	GPModel.train()
@@ -190,7 +218,6 @@ def TorchTrainMultiFeature(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, Trainin
 		
 
 		GPOptimizer.step()
-	return GPModel, GPLikelihood
 
 def TorchTest(Xtst, GPModel, GPLikelihood):
 	GPModel.eval()

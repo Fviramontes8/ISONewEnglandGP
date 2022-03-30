@@ -14,6 +14,14 @@ import SignalProcessor as sp
 import torch
 import GPyTorchUtils as gptu
 
+def plot_ISO_features(feature_data, feature_descriptions, feature_units):
+    for data, description, units in zip(
+        feature_data, 
+        feature_descriptions, 
+        feature_units
+    ): 
+        pu.general_plot(data, description, "Time (Hours)", units)
+    
 def PlotMTGPPred(XCompare, YCompare, XPred, YPred, Xtitle="", Ytitle="", Title="", TasksTitle=""):
 	with torch.no_grad():
 		mt_lower_sigma, mt_upper_sigma = YPred.confidence_region()

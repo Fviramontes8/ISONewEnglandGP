@@ -10,6 +10,40 @@ import gpytorch
 
 import matplotlib.pyplot as plt
 
+class MultitaskGPModel(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y, likelihood, rank, task_number=2):
+        super().__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.MultitaskMean(
+            gpytorch.means.ConstantMean(),
+            num_tasks = task_number,
+        )
+        self.covar_module = gpytorch.kernels.MultitaskKernel(
+            gpytorch.kernels.LinearKernel(),
+            num_tasks = task_number,
+            rank=rank
+        )
+
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultitaskMultivariateNormal(
+            mean_x,
+            covar_x
+        )
+
+class LinearGPModel(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y, likelihood):
+        super(LinearGPModel, self).__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.ConstantMean()
+        self.covar_module = gpytorch.kernels.ScaleKernel(
+            gpytorch.kernels.LinearKernel()
+        )
+
+        def forward(self, x):
+            mean_x = self.mean_module(x)
+            covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
 class OneDayLinearGP():
     def __init__(self, train_x, train_y_mat, likelihood):
         self.train_x = train_x
@@ -22,18 +56,18 @@ class OneDayLinearGP():
     def train(self, optimizers, iterations):
         for i, j, k in zip(self.train_y, self.models, optimizers):
             TorchTrain(
-                self.train_x, 
-                i, 
-                j, 
-                self.likelihood, 
-                k, 
+                self.train_x,
+                i,
+                j,
+                self.likelihood,
+                k,
                 iterations
             )
             print("")
 
     def test(self, test_x):
         self.pred = [
-            TorchTest(test_x, i, self.likelihood) 
+            TorchTest(test_x, i, self.likelihood)
             for i in self.models
         ]
         self.lower_sigma = [
@@ -45,7 +79,7 @@ class OneDayLinearGP():
             for i in self.pred
         ]
         self.lower_two_sigma = self.calc_2sigma(
-            self.pred, 
+            self.pred,
             self.lower_sigma
         )
         self.upper_two_sigma = self.calc_2sigma(
@@ -59,7 +93,7 @@ class OneDayLinearGP():
             (mu_and_sigma + (1.96 * (mu_and_sigma - mu.mean.numpy()))).item()
             for mu, mu_and_sigma in zip(mean, sigma)
         ]
-    
+
         return two_sigma
 
     def plot_pred(self, test_y, title, xlabel, ylabel):
@@ -99,7 +133,6 @@ class LinearGPModel(gpytorch.models.ExactGP):
 		mean_x = self.mean_module(x)
 		covar_x = self.covar_module(x)
 		return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
-
 
 class RBFGPModel(gpytorch.models.ExactGP):
 	def __init__(self, train_x, train_y, likelihood):
@@ -169,21 +202,15 @@ def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter, Loss=
 		GPOptimizer.zero_grad()
 
 		output = GPModel(Xtr)
-		#print(f"Output shape: {output.mean.shape}")
-		#print(f"Xtr shape: {Xtr.shape}")
-		#print(f"Ytr shape: {Ytr.shape}")
 
 		loss = -marginal_log_likelihood(output, Ytr)
 		if Loss:
 			loss_list.append(loss.detach().numpy())
-		#print(loss.shape)
 		loss.backward()
-		
-		print("Iter %03d/%03d - Loss: %.3f\tnoise: %.3f" % (
-				i + 1, TrainingIter, loss.item(),
-				GPModel.likelihood.noise.item()
-			)
-		)
+
+		print(f"Iter {i+1:03d}/{TrainingIter:03d} - ", end="")
+		print(f"Loss: {loss.item():.3f}\t", end="")
+		print(f"noise: {GPModel.likelihood.noise.item():.3f}")
 
 		GPOptimizer.step()
 
@@ -209,20 +236,18 @@ def TorchTrainMultiFeature(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, Trainin
 		# Otherwise should be loss.sum().backward() or loss.mean().backward() for multiple values for loss
 		#loss.sum().backward()
 		loss.mean().backward()
-		
+
 		print("Iter %03d/%03d - Loss: %.3f\tnoise: %.3f" % (
 			i + 1, TrainingIter, loss.mean().item(),
 			GPModel.likelihood.noise.item()
 		))
-		
-		
 
 		GPOptimizer.step()
 
 def TorchTest(Xtst, GPModel, GPLikelihood):
 	GPModel.eval()
 	GPLikelihood.eval()
-	
+
 	with torch.no_grad(), gpytorch.settings.fast_pred_var():
 		output = GPModel(Xtst)
 		observed_pred = GPLikelihood(output)
@@ -250,7 +275,7 @@ def ToStdDev1(pred_mean):
 	upper1sigma = ( (upper2sigma.numpy() - pred_mean.mean.numpy()) / 1.96) + pred_mean.mean.numpy()
 
 	return lower1sigma, upper1sigma
-		
+
 """
 Returns the percent of data contained with in 1 and 2 standard deviations
 YPred should be a torch tensor where YPred.mean.numpy() is a valid method call

@@ -11,7 +11,7 @@ import gpytorch
 import matplotlib.pyplot as plt
 
 class MultitaskGPModel(gpytorch.models.ExactGP):
-    def __init__(self, train_x, train_y, task_number=2):
+    def __init__(self, train_x, train_y, likelihood, rank, task_number=2):
         super().__init__(train_x, train_y, likelihood)
         self.mean_module = gpytorch.means.MultitaskMean(
             gpytorch.means.ConstantMean(),
@@ -20,16 +20,29 @@ class MultitaskGPModel(gpytorch.models.ExactGP):
         self.covar_module = gpytorch.kernels.MultitaskKernel(
             gpytorch.kernels.LinearKernel(),
             num_tasks = task_number,
-            rank=1
+            rank=rank
         )
 
     def forward(self, x):
-        mean_x = self.mean_module
-        covar_x = self.covar_module
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
         return gpytorch.distributions.MultitaskMultivariateNormal(
             mean_x,
             covar_x
         )
+
+class LinearGPModel(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y, likelihood):
+        super(LinearGPModel, self).__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.ConstantMean()
+        self.covar_module = gpytorch.kernels.ScaleKernel(
+            gpytorch.kernels.LinearKernel()
+        )
+
+        def forward(self, x):
+            mean_x = self.mean_module(x)
+            covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 class OneDayLinearGP():
     def __init__(self, train_x, train_y_mat, likelihood):
@@ -108,19 +121,6 @@ class OneDayLinearGP():
         plt.legend()
         plt.show()
 
-class LinearGPModel(gpytorch.models.ExactGP):
-	def __init__(self, train_x, train_y, likelihood):
-		super(LinearGPModel, self).__init__(train_x, train_y, likelihood)
-		self.mean_module = gpytorch.means.ConstantMean()
-		self.covar_module = gpytorch.kernels.ScaleKernel(
-			gpytorch.kernels.LinearKernel()
-		)
-
-	def forward(self, x):
-		mean_x = self.mean_module(x)
-		covar_x = self.covar_module(x)
-		return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
-
 
 class RBFGPModel(gpytorch.models.ExactGP):
 	def __init__(self, train_x, train_y, likelihood):
@@ -189,15 +189,15 @@ def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter, Loss=
 	for i in range(TrainingIter):
 		GPOptimizer.zero_grad()
 
+		print(f"Xtr shape: {Xtr.shape}")
+		print(f"Ytr shape: {Ytr.shape}")
 		output = GPModel(Xtr)
-		#print(f"Output shape: {output.mean.shape}")
-		#print(f"Xtr shape: {Xtr.shape}")
-		#print(f"Ytr shape: {Ytr.shape}")
+		print(f"Output shape: {output.mean.shape}")
 
 		loss = -marginal_log_likelihood(output, Ytr)
 		if Loss:
 			loss_list.append(loss.detach().numpy())
-		#print(loss.shape)
+		print(f"Loss shape: {loss.shape}")
 		loss.backward()
 		
 		print("Iter %03d/%03d - Loss: %.3f\tnoise: %.3f" % (

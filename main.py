@@ -24,7 +24,7 @@ def one_hour_prediction(input_data):
         lr = 0.1
     )
 
-    train_loss = gptu.TorchTrain(
+    train_loss, train_noise = gptu.TorchTrain(
         train_x,
         train_y,
         gp_model,
@@ -34,6 +34,7 @@ def one_hour_prediction(input_data):
         True
     )
     pu.general_plot(train_loss, "Loss over time")
+    pu.general_plot(train_noise, "Noise over time")
     pred = gptu.TorchTest(test_x, gp_model, likelihood)
     print(f"{test_y.item()}")
     print(f"{pred.mean.numpy()}")
@@ -118,7 +119,7 @@ def main():
     print(f"Data length: {len(feature_data)}")
     one_hour_prediction(feature_data)
     one_day_prediction(feature_data)
-
+    '''
     train_x, test_x = gptu.torch_one_hour_data_split(
         feature_data,
         0,
@@ -164,7 +165,7 @@ def main():
         lr=0.1
     )
 
-    loss = gptu.TorchTrain(
+    loss, noise = gptu.TorchTrain(
         train_x,
         train_y,
         model,
@@ -174,6 +175,8 @@ def main():
         True
     )
     pu.general_plot(loss, "Training loss", "Time", "Loss")
+    pu.general_plot(noise, "Training noise", "Time", "Noise")
+    '''
 
 if __name__ == "__main__":
     main()

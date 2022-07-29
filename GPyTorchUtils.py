@@ -42,7 +42,7 @@ class LinearGPModel(gpytorch.models.ExactGP):
         def forward(self, x):
             mean_x = self.mean_module(x)
             covar_x = self.covar_module(x)
-        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+            return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 class OneDayLinearGP():
     def __init__(self, train_x, train_y_mat, likelihood):
@@ -56,11 +56,11 @@ class OneDayLinearGP():
     def train(self, optimizers, iterations):
         for i, j, k in zip(self.train_y, self.models, optimizers):
             TorchTrain(
-                self.train_x, 
-                i, 
-                j, 
-                self.likelihood, 
-                k, 
+                self.train_x,
+                i,
+                j,
+                self.likelihood,
+                k,
                 iterations
             )
             print("")
@@ -93,7 +93,6 @@ class OneDayLinearGP():
             (mu_and_sigma + (1.96 * (mu_and_sigma - mu.mean.numpy()))).item()
             for mu, mu_and_sigma in zip(mean, sigma)
         ]
-    
         return two_sigma
 
     def plot_pred(self, test_y, title, xlabel, ylabel):
@@ -199,7 +198,7 @@ def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter, Loss=
 			loss_list.append(loss.detach().numpy())
 		print(f"Loss shape: {loss.shape}")
 		loss.backward()
-		
+
 		print("Iter %03d/%03d - Loss: %.3f\tnoise: %.3f" % (
 				i + 1, TrainingIter, loss.item(),
 				GPModel.likelihood.noise.item()
@@ -230,20 +229,18 @@ def TorchTrainMultiFeature(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, Trainin
 		# Otherwise should be loss.sum().backward() or loss.mean().backward() for multiple values for loss
 		#loss.sum().backward()
 		loss.mean().backward()
-		
+
 		print("Iter %03d/%03d - Loss: %.3f\tnoise: %.3f" % (
 			i + 1, TrainingIter, loss.mean().item(),
 			GPModel.likelihood.noise.item()
 		))
-		
-		
 
 		GPOptimizer.step()
 
 def TorchTest(Xtst, GPModel, GPLikelihood):
 	GPModel.eval()
 	GPLikelihood.eval()
-	
+
 	with torch.no_grad(), gpytorch.settings.fast_pred_var():
 		output = GPModel(Xtst)
 		observed_pred = GPLikelihood(output)
@@ -271,7 +268,7 @@ def ToStdDev1(pred_mean):
 	upper1sigma = ( (upper2sigma.numpy() - pred_mean.mean.numpy()) / 1.96) + pred_mean.mean.numpy()
 
 	return lower1sigma, upper1sigma
-		
+
 """
 Returns the percent of data contained with in 1 and 2 standard deviations
 YPred should be a torch tensor where YPred.mean.numpy() is a valid method call

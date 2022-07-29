@@ -18,7 +18,9 @@ class MultitaskGPModel(gpytorch.models.ExactGP):
             num_tasks = task_number,
         )
         self.covar_module = gpytorch.kernels.MultitaskKernel(
-            gpytorch.kernels.LinearKernel(),
+            gpytorch.kernels.ScaleKernel(
+                gpytorch.kernels.RBFKernel()
+            ),
             num_tasks = task_number,
             rank=rank
         )

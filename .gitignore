@@ -128,5 +128,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Src xls data that eventually gets converted to npy
 xls_data/
+# Src mat data that eventually gets converted to npy
+*.mat
+# Local graphs created in python files that can be recreated
 data_graphs/

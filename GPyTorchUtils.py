@@ -10,16 +10,19 @@ import gpytorch
 
 import matplotlib.pyplot as plt
 
+
 class MultitaskGPModel(gpytorch.models.ExactGP):
     def __init__(self, train_x, train_y, likelihood, rank, task_number=2):
         super().__init__(train_x, train_y, likelihood)
         self.mean_module = gpytorch.means.MultitaskMean(
             gpytorch.means.ConstantMean(),
-            num_tasks = task_number,
+            num_tasks=task_number,
         )
         self.covar_module = gpytorch.kernels.MultitaskKernel(
-            gpytorch.kernels.LinearKernel(),
-            num_tasks = task_number,
+            gpytorch.kernels.ScaleKernel(
+                gpytorch.kernels.RBFKernel()
+            ),
+            num_tasks=task_number,
             rank=rank
         )
 
@@ -31,18 +34,20 @@ class MultitaskGPModel(gpytorch.models.ExactGP):
             covar_x
         )
 
+
 class LinearGPModel(gpytorch.models.ExactGP):
     def __init__(self, train_x, train_y, likelihood):
-        super(LinearGPModel, self).__init__(train_x, train_y, likelihood)
+        super().__init__(train_x, train_y, likelihood)
         self.mean_module = gpytorch.means.ConstantMean()
         self.covar_module = gpytorch.kernels.ScaleKernel(
             gpytorch.kernels.LinearKernel()
         )
 
-        def forward(self, x):
-            mean_x = self.mean_module(x)
-            covar_x = self.covar_module(x)
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
 
 class OneDayLinearGP():
     def __init__(self, train_x, train_y_mat, likelihood):
@@ -87,13 +92,11 @@ class OneDayLinearGP():
             self.upper_sigma
         )
 
-
     def calc_2sigma(self, mean, sigma):
         two_sigma = [
             (mu_and_sigma + (1.96 * (mu_and_sigma - mu.mean.numpy()))).item()
             for mu, mu_and_sigma in zip(mean, sigma)
         ]
-
         return two_sigma
 
     def plot_pred(self, test_y, title, xlabel, ylabel):
@@ -121,38 +124,27 @@ class OneDayLinearGP():
         plt.legend()
         plt.show()
 
-class LinearGPModel(gpytorch.models.ExactGP):
-	def __init__(self, train_x, train_y, likelihood):
-		super(LinearGPModel, self).__init__(train_x, train_y, likelihood)
-		self.mean_module = gpytorch.means.ConstantMean()
-		self.covar_module = gpytorch.kernels.ScaleKernel(
-			gpytorch.kernels.LinearKernel()
-		)
-
-	def forward(self, x):
-		mean_x = self.mean_module(x)
-		covar_x = self.covar_module(x)
-		return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 class RBFGPModel(gpytorch.models.ExactGP):
-	def __init__(self, train_x, train_y, likelihood):
-		super(RBFGPModel, self).__init__(train_x, train_y, likelihood)
-		self.mean_module = gpytorch.means.ConstantMean()
-		self.covar_module = gpytorch.kernels.ScaleKernel(
-			gpytorch.kernels.RBFKernel()
-		)
+    def __init__(self, train_x, train_y, likelihood):
+        super(RBFGPModel, self).__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.ConstantMean()
+        self.covar_module = gpytorch.kernels.ScaleKernel(
+            gpytorch.kernels.RBFKernel()
+        )
 
-	def forward(self, x):
-		mean_x = self.mean_module(x)
-		covar_x = self.covar_module(x)
-		return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
 
 def torch_one_hour_data_split(data, offset=11, return_y=True):
-    assert(len(data)>48)
-    # Inclusive beginning 
-    begin=0
+    assert (len(data) > 48)
+    # Inclusive beginning
+    begin = 0
     # Exclusive end
-    end=24
+    end = 24
     offset += 24
 
     train_x = torch.Tensor(data[begin:end]).view(1, 24)
@@ -160,7 +152,7 @@ def torch_one_hour_data_split(data, offset=11, return_y=True):
 
     begin = end
     end += 24
-    while(end < (len(data) - 48)):
+    while (end < (len(data) - 48)):
         train_x = torch.vstack([train_x, torch.Tensor(data[begin:end])])
         train_y = torch.cat([train_y, torch.Tensor([data[begin+offset]])])
         begin = end
@@ -172,141 +164,162 @@ def torch_one_hour_data_split(data, offset=11, return_y=True):
         return train_x, train_y, test_x, test_y
     return train_x, test_x
 
+
 def torch_one_hour_target_split(data, offset=0):
-    begin=0
-    end=24
+    begin = 0
+    end = 24
     offset += 24
     train_y = torch.Tensor([data[offset]])
 
     begin = end
     end += 24
-    while(end < (len(data) - 48)):
+    while (end < (len(data) - 48)):
         train_y = torch.cat([train_y, torch.Tensor([data[begin+offset]])])
         begin = end
         end += 24
     test_y = torch.Tensor([data[begin+offset]])
     return train_y, test_y
 
-def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter, Loss=False):
-	GPModel.train()
-	GPLikelihood.train()
 
-	marginal_log_likelihood = gpytorch.mlls.ExactMarginalLogLikelihood(
-		GPLikelihood,
-		GPModel
-	)
-	if Loss:
-		loss_list = []
+def TorchTrain(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter,
+               Verbose=False):
+    GPModel.train()
+    GPLikelihood.train()
 
-	for i in range(TrainingIter):
-		GPOptimizer.zero_grad()
+    marginal_log_likelihood = gpytorch.mlls.ExactMarginalLogLikelihood(
+        GPLikelihood,
+        GPModel
+    )
+    if Verbose:
+        loss_list = []
+        noise_list = []
 
-		output = GPModel(Xtr)
+    for i in range(TrainingIter):
+        GPOptimizer.zero_grad()
 
-		loss = -marginal_log_likelihood(output, Ytr)
-		if Loss:
-			loss_list.append(loss.detach().numpy())
-		loss.backward()
+        # print(f"Xtr shape: {Xtr.shape}")
+        # print(f"Ytr shape: {Ytr.shape}")
+        output = GPModel(Xtr)
+        # print(f"Output shape: {output.mean.shape}")
 
-		print(f"Iter {i+1:03d}/{TrainingIter:03d} - ", end="")
-		print(f"Loss: {loss.item():.3f}\t", end="")
-		print(f"noise: {GPModel.likelihood.noise.item():.3f}")
+        loss = -marginal_log_likelihood(output, Ytr)
+        if Verbose:
+            loss_list.append(loss.detach().numpy())
+            noise_list.append(GPModel.likelihood.noise.item())
+        # print(f"Loss shape: {loss.shape}")
+        loss.backward()
 
-		GPOptimizer.step()
+        print("Iter %03d/%03d - Loss: %.3f\tnoise: %.3f" % (
+                i + 1, TrainingIter, loss.item(),
+                GPModel.likelihood.noise.item()
+            )
+        )
 
-	if Loss:
-		return loss_list
+        GPOptimizer.step()
 
-def TorchTrainMultiFeature(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer, TrainingIter):
-	GPModel.train()
-	GPLikelihood.train()
+    if Verbose:
+        return loss_list, noise_list
 
-	marginal_log_likelihood = gpytorch.mlls.ExactMarginalLogLikelihood(
-		GPLikelihood,
-		GPModel
-	)
 
-	for i in range(TrainingIter):
-		GPOptimizer.zero_grad()
+def TorchTrainMultiFeature(Xtr, Ytr, GPModel, GPLikelihood, GPOptimizer,
+                           TrainingIter):
+    GPModel.train()
+    GPLikelihood.train()
 
-		output = GPModel(Xtr)
+    marginal_log_likelihood = gpytorch.mlls.ExactMarginalLogLikelihood(
+        GPLikelihood,
+        GPModel
+    )
 
-		loss = -marginal_log_likelihood(output, Ytr)
-		# Must be loss.backward() if there is a single value for loss
-		# Otherwise should be loss.sum().backward() or loss.mean().backward() for multiple values for loss
-		#loss.sum().backward()
-		loss.mean().backward()
+    for i in range(TrainingIter):
+        GPOptimizer.zero_grad()
 
-		print("Iter %03d/%03d - Loss: %.3f\tnoise: %.3f" % (
-			i + 1, TrainingIter, loss.mean().item(),
-			GPModel.likelihood.noise.item()
-		))
+        output = GPModel(Xtr)
 
-		GPOptimizer.step()
+        loss = -marginal_log_likelihood(output, Ytr)
+        # Must be loss.backward() if there is a single value for loss
+        # Otherwise should be loss.sum().backward() or loss.mean().backward()
+        # for multiple values for loss
+        # loss.sum().backward()
+        loss.mean().backward()
+
+        print("Iter %03d/%03d - Loss: %.3f\tnoise: %.3f" % (
+            i + 1, TrainingIter, loss.mean().item(),
+            GPModel.likelihood.noise.item()
+        ))
+
+        GPOptimizer.step()
+
 
 def TorchTest(Xtst, GPModel, GPLikelihood):
-	GPModel.eval()
-	GPLikelihood.eval()
+    GPModel.eval()
+    GPLikelihood.eval()
 
-	with torch.no_grad(), gpytorch.settings.fast_pred_var():
-		output = GPModel(Xtst)
-		observed_pred = GPLikelihood(output)
+    with torch.no_grad(), gpytorch.settings.fast_pred_var():
+        output = GPModel(Xtst)
+        observed_pred = GPLikelihood(output)
 
-	return observed_pred
+    return observed_pred
 
-"""
-Takes a torch tensor and returns lower and upper confidence region for one
-standard deviation
-"""
+
 def ToStdDev1MT(pred_mean, lower2sigma, upper2sigma):
-	lower1sigma = ( (lower2sigma.numpy() - pred_mean) / 1.96) + pred_mean
-	upper1sigma = ( (upper2sigma.numpy() - pred_mean) / 1.96) + pred_mean
+    """
+    Takes a torch tensor and returns lower and upper confidence region for one
+    standard deviation
+    """
+    lower1sigma = ((lower2sigma.numpy() - pred_mean) / 1.96) + pred_mean
+    upper1sigma = ((upper2sigma.numpy() - pred_mean) / 1.96) + pred_mean
 
-	return lower1sigma, upper1sigma
+    return lower1sigma, upper1sigma
 
-"""
-Takes a torch tensor and returns lower and upper confidence region for one
-standard deviation
-"""
+
 def ToStdDev1(pred_mean):
-	lower2sigma, upper2sigma = pred_mean.confidence_region()
+    """
+    Takes a torch tensor and returns lower and upper confidence region for one
+    standard deviation
+    """
+    lower2sigma, upper2sigma = pred_mean.confidence_region()
 
-	lower1sigma = ( (lower2sigma.numpy() - pred_mean.mean.numpy()) / 1.96) + pred_mean.mean.numpy()
-	upper1sigma = ( (upper2sigma.numpy() - pred_mean.mean.numpy()) / 1.96) + pred_mean.mean.numpy()
+    lower1sigma = ((lower2sigma.numpy() - pred_mean.mean.numpy()
+                    ) / 1.96) + pred_mean.mean.numpy()
+    upper1sigma = ((upper2sigma.numpy() - pred_mean.mean.numpy()
+                    ) / 1.96) + pred_mean.mean.numpy()
 
-	return lower1sigma, upper1sigma
+    return lower1sigma, upper1sigma
 
-"""
-Returns the percent of data contained with in 1 and 2 standard deviations
-YPred should be a torch tensor where YPred.mean.numpy() is a valid method call
-YTrue should be a numpy array
-"""
+
 def verify_confidence_region(YPred, YTrue):
-	y_pred_mean = YPred.mean.numpy()
-	y_true = YTrue.numpy()
-	assert (len(y_pred_mean) == len(y_true))
+    """
+    Returns the percent of data contained with in 1 and 2 standard deviations
+    YPred should be a torch tensor where YPred.mean.numpy() is a valid method
+    call YTrue should be a numpy array
+    """
+    y_pred_mean = YPred.mean.numpy()
+    y_true = YTrue.numpy()
+    assert (len(y_pred_mean) == len(y_true))
 
-	y_lower_sigma, y_upper_sigma = YPred.confidence_region()
-	y_lower_sigma1, y_upper_sigma1 = ToStdDev1(YPred)
-	y_lower_sigma2, y_upper_sigma2 = y_lower_sigma.numpy(), y_upper_sigma.numpy()
+    y_lower_sigma, y_upper_sigma = YPred.confidence_region()
+    y_lower_sigma1, y_upper_sigma1 = ToStdDev1(YPred)
+    y_lower_sigma2, y_upper_sigma2 = y_lower_sigma.numpy(), y_upper_sigma.numpy()
 
-	sigma1_count = 0
-	sigma2_count = 0
+    sigma1_count = 0
+    sigma2_count = 0
 
-	for i in range(len(y_pred_mean)):
-		if y_lower_sigma1[i] <= y_true[i] and y_upper_sigma1[i] >= y_true[i]:
-			sigma1_count += 1
+    for i in range(len(y_pred_mean)):
+        if y_lower_sigma1[i] <= y_true[i] and y_upper_sigma1[i] >= y_true[i]:
+            sigma1_count += 1
 
-		if y_lower_sigma2[i] <= y_true[i] and y_upper_sigma2[i] >= y_true[i]:
-			sigma2_count += 1
+        if y_lower_sigma2[i] <= y_true[i] and y_upper_sigma2[i] >= y_true[i]:
+            sigma2_count += 1
 
-	return sigma1_count/len(YTrue), sigma2_count/len(YTrue)
+    return sigma1_count/len(YTrue), sigma2_count/len(YTrue)
+
 
 def confirm_confidence_region(ypred, ytrue, upper_sigma, lower_sigma):
-	sigma_count = 0
+    sigma_count = 0
 
-	for i in range(len(ypred)):
-		if lower_sigma[i] <= ytrue[i] and upper_sigma[i] >= ytrue[i]:
-			sigma_count += 1
+    for i in range(len(ypred)):
+        if lower_sigma[i] <= ytrue[i] and upper_sigma[i] >= ytrue[i]:
+            sigma_count += 1
 
-	return sigma_count/len(ytrue)
+    return sigma_count/len(ytrue)

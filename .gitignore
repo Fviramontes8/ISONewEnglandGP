@@ -134,3 +134,7 @@ xls_data/
 *.mat
 # Local graphs created in python files that can be recreated
 data_graphs/
+
+# Local files/folders
+data
+sessions

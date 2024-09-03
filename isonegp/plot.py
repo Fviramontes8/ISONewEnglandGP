@@ -7,163 +7,89 @@ Created on Tue Dec 22 17:35:15 2020
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Private signal processor/sampler
-import SignalProcessor as sp
 
-# Graphs with PyTorch data
-import torch
-import GPyTorchUtils as gptu
+def plot_data(
+    data: np.ndarray,
+    title: str = '',
+    xtitle: str = '',
+    ytitle: str = '',
+    is_save: bool = False,
+    run_prefix: str = '',
+    save_filename: str = '',
+) -> None:
+    plt.plot(data)
+    plt.title(title)
+    plt.xlabel(xtitle)
+    plt.ylabel(ytitle)
+    if is_save:
+        plt.savefig(f'sessions/{run_prefix}/figs/{save_filename}.png', dpi=600)
+        plt.clf()
+    else:
+        plt.show()
 
-def plot_ISO_features(feature_data, feature_descriptions, feature_units):
-    for data, description, units in zip(
-        feature_data, 
-        feature_descriptions, 
-        feature_units
-    ): 
-        pu.general_plot(data, description, "Time (Hours)", units)
-    
-def PlotMTGPPred(XCompare, YCompare, XPred, YPred, Xtitle="", Ytitle="", Title="", TasksTitle=""):
-	with torch.no_grad():
-		mt_lower_sigma, mt_upper_sigma = YPred.confidence_region()
-		for i in range(YPred.mean.numpy().shape[0]):
-			sigma1_lower, sigma1_upper = gptu.ToStdDev1MT(
-				YPred.mean.numpy()[0],
-				mt_lower_sigma[i],
-				mt_upper_sigma[i]
-			)
 
-			plt.plot(XCompare.numpy(), YCompare.numpy()[i], "k")
-			plt.plot(XPred.numpy(), YPred.mean.numpy()[i], "b")
-			plt.fill_between(
-				XPred.numpy()[i],
-				mt_lower_sigma.numpy()[i],
-				mt_upper_sigma.numpy()[i],
-				alpha = 0.5
-			)
-	
-			plt.fill_between(
-				XPred.numpy(),
-				sigma1_lower,
-				sigma1_upper,
-				alpha = 0.5
-			)
-	
-			plt.xlabel(Xtitle)
-			plt.ylabel(Ytitle)
-			plt.title(Title+TasksTitle[i])
-			plt.legend(
-				[
-					"Observed Data", 
-					"Prediction Mean", 
-					"2 StdDev Confidence", 
-					"1 StdDev Confidence"
-				]
-			)
-			plt.show()
+def plot_overlapping_data(
+    data: list[np.ndarray],
+    title: str = '',
+    xtitle: str = '',
+    ytitle: str = '',
+    is_save: bool = False,
+    run_prefix: str = '',
+    save_filename: str = '',
+) -> None:
+    for datum in data:
+        plt.plot(datum)
+    plt.title(title)
+    plt.xlabel(xtitle)
+    plt.ylabel(ytitle)
+    if is_save:
+        plt.savefig(f'sessions/{run_prefix}/figs/{save_filename}.png', dpi=600)
+        plt.clf()
+    else:
+        plt.show()
 
-def PlotGPPred(XCompare, YCompare, XPred, YPred, Xtitle="", Ytitle="", Title=""):
-	with torch.no_grad():
-		#fig, ax = plt.subplots(1, 1, figsize = (8, 6))
-		lower_sigma, upper_sigma = YPred.confidence_region()
 
-		sigma1_lower, sigma1_upper = gptu.ToStdDev1(YPred)
+def plot_autocorr(
+    data: np.ndarray, title: str = 'Autocorrelation', **kwargs
+) -> None:
+    self_corr = np.correlate(data, data, 'full')
+    plot_data(self_corr, title, **kwargs)
 
-		plt.plot(XCompare.numpy(), YCompare.numpy(), "k")
-		plt.plot(XPred.numpy(), YPred.mean.numpy(), "b")
-		plt.fill_between(
-			XPred.numpy(),
-			lower_sigma.numpy(),
-			upper_sigma.numpy(),
-			alpha = 0.5
-		)
 
-		plt.fill_between(
-			XPred.numpy(),
-			sigma1_lower,
-			sigma1_upper,
-			alpha = 0.5
-		)
+def plot_crosscorr(
+    x: np.ndarray, y: np.ndarray, title: str = 'Crosscorrelation', **kwargs
+) -> None:
+    crosscorr = np.correlate(x, y, 'full')
+    plot_data(crosscorr, title, **kwargs)
 
-		plt.xlabel(Xtitle)
-		plt.ylabel(Ytitle)
-		plt.title(Title)
-		plt.legend(
-			[
-				"Observed Data", 
-				"Prediction Mean", 
-				"2 StdDev Confidence", 
-				"1 StdDev Confidence"
-			]
-		)
-		plt.show()
-		
-def general_plot(data, title="", xtitle="", ytitle=""):
-	plt.plot(data)
-	plt.title(title)
-	plt.xlabel(xtitle)
-	plt.ylabel(ytitle)
-	plt.show()
-	
-def general_double_plot(data1, data2, title="", xtitle="", ytitle=""):
-	assert(len(data1) == len(data2))
-	plt.plot(data1)
-	plt.plot(data2)
-	plt.title(title)
-	plt.xlabel(xtitle)
-	plt.ylabel(ytitle)
-	plt.show()
 
-def plot_autocorr(data, titles):
-	for i in range(len(data)):
-		self_corr = np.correlate(data[i], data[i], "full")
-		general_plot(self_corr, titles[i])
+def plot_cat_data(
+    data: list[np.ndarray],
+    matplot_colors: list[str],
+    legend_titles: list[str],
+    title: str = '',
+    xtitle: str = '',
+    ytitle: str = '',
+    is_save: bool = False,
+    run_prefix: str = '',
+    save_filename: str = '',
+) -> None:
+    assert len(data) == len(matplot_colors)
+    assert len(matplot_colors) == len(legend_titles)
+    total_elems = sum([i.size for i in data])
+    elems_range = [i for i in range(total_elems)]
+    plt.ylabel(ytitle)
+    plt.xlabel(xtitle)
+    plt.title(title)
 
-def plot_crosscorr(x, y, title):
-	assert(len(x)==len(y))
-	crosscorr = np.correlate(x, y, "full")
-	general_plot(crosscorr, title)
-
-def plot_features(feats, feat_titles):
-	assert(len(feats)==len(feat_titles))
-	for i in range(len(feats)):
-		general_plot(feats[i], feat_titles[i])
-		
-def plot_gp(pred, sigma, compare, x_title, y_title, day, window):
-	#print("Arguement size: ", pred.shape, sigma.shape, compare.shape)
-	#print("Feature: ", feature, "\nDay: ", day, "\nTitle ", window)
-	stddev_coef = 0.98#1.96
-	var_coef = 1.96
-	prediction_time= [p+1 for p in range(len(pred))]
-	plt.fill(np.concatenate([prediction_time, prediction_time[::-1]]),
-			  np.concatenate([pred-var_coef*sigma,
-					 (pred+var_coef*sigma)[::-1]]),
-			  alpha=.5, fc='b', ec='none', label="2 StdDev confidence")
-	plt.fill(np.concatenate([prediction_time, prediction_time[::-1]]),
-			  np.concatenate([pred-stddev_coef*sigma,
-					 (pred+stddev_coef*sigma)[::-1]]),
-			  alpha=.5, fc='m', ec='none', label="1 StdDev confidence")
-	plt.plot(prediction_time, pred, "c-", label="GP Prediction")
-	plt.plot(prediction_time, compare, "y-", label="Actual data")
-	plt.legend()
-	plt.title("Gaussian Process Prediction with 6th order Butterworth filtering,\nPredicting "
-		   +day+"\nWith window of "+str(window)+"\nAnd 1 and 2 standard deviations")
-	plt.xlabel(x_title)
-	plt.ylabel(y_title)
-	plt.show()
-	
-def plot_ridge(pred, compare, feature, day, window):
-	prediction_time= [p+1 for p in range(len(pred))]
-
-	plt.plot(prediction_time, pred, "c-", label="Ridge Regression Prediction")
-	plt.plot(prediction_time, compare, "y-", label="Actual data")
-	plt.legend()
-	plt.title("Ridge Regression Prediction with 6th order Butterworth filtering,\nPredicting a "
-		   +day+"\nWith window of "+str(window))
-	plt.xlabel("Time (hours)")
-	plt.ylabel(feature+" (predicted)")
-	plt.show()
-	
-def plot_ridge_prediction(pred, ycomp, day, window):
-	ridge_mape_score = sp.mape_test(ycomp, pred)
-	#print("MAPE score for ridge: ", ridge_mape_score)
-	plot_ridge(pred, ycomp, "Bits", day, str(window)+"\nand MAPE of "+str(ridge_mape_score))
+    start, end = 0, 0
+    for datum, color, legend_title in zip(data, matplot_colors, legend_titles):
+        end += datum.size
+        plt.plot(elems_range[start:end], datum, color, label=legend_title)
+        start += datum.size
+    plt.legend()
+    if is_save:
+        plt.savefig(f'sessions/{run_prefix}/figs/{save_filename}.png', dpi=600)
+        plt.clf()
+    else:
+        plt.show()

@@ -1,6 +1,6 @@
 import numpy as np
 
-from isonegp.preprocess import pretrain_checks
+from isonegp.preprocess import pretrain_checks, normalize
 from isonegp.plot import plot_cat_data
 from isonegp.session_generator import create_run_folder
 
@@ -37,6 +37,28 @@ def main():
     )
     pretrain_checks(
         demand_training_data, demand_testing_data, current_run_folder
+    )
+
+    normalized_training_data = normalize(demand_training_data)
+    normalized_testing_data = normalize(demand_testing_data)
+    plot_cat_data(
+        [normalized_training_data, normalized_testing_data],
+        ['c', 'm'],
+        ['Training data', 'Testing data'],
+        demand_description,
+        'Hours',
+        demand_units,
+        True,
+        current_run_folder,
+        'normalized_training_testing_data_fullview',
+    )
+
+    normalized_filename_prefix = 'normalized_'
+    pretrain_checks(
+        normalized_training_data,
+        normalized_testing_data,
+        current_run_folder,
+        normalized_filename_prefix,
     )
 
 

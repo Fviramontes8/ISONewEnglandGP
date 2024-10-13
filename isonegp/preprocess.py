@@ -43,3 +43,10 @@ def pretrain_checks(
     plot_autocorr(testing, 'Autocorrelation with testing data', **plot_args)
 
 
+def normalize(raw_data: np.ndarray) -> np.ndarray:
+    normalized_data = raw_data.copy()
+    mu = np.mean(normalized_data)
+    sigma = np.std(normalized_data, mean=mu)
+    for i in range(normalized_data.size):
+        normalized_data[i] = (normalized_data[i] - mu) / sigma
+    return normalized_data

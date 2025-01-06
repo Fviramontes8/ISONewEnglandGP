@@ -1,4 +1,4 @@
-blue
-black
+gpytorch
 matplotlib
 numpy
+torch --index-url https://download.pytorch.org/whl/cu118

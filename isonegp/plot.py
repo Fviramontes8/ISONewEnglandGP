@@ -89,7 +89,38 @@ def plot_cat_data(
         start += datum.size
     plt.legend()
     if is_save:
-        plt.savefig(f'sessions/{run_prefix}/figs/{save_filename}.png', dpi=600)
+        plt.savefig(f"sessions/{run_prefix}/figs/{save_filename}.png", dpi=600)
+        plt.clf()
+    else:
+        plt.show()
+
+
+def plot_gp_inference(
+    train_y: np.ndarray,
+    test_y: np.ndarray,
+    pred_y: np.ndarray,
+    pred_y_lower: np.ndarray,
+    pred_y_upper: np.ndarray,
+    is_save: bool = False,
+    run_prefix: str = "",
+    save_filename: str = "",
+) -> None:
+    total_y_values = train_y.size + test_y.size
+    graph_x = np.linspace(0, total_y_values - 1, total_y_values)
+    plt.title("Inference on testing data")
+    plt.plot(graph_x[: train_y.size], train_y, "k", label="Training values")
+    plt.plot(graph_x[train_y.size :], test_y, "k-.", label="Testing values")
+    plt.plot(graph_x[train_y.size :], pred_y, "m", label="Predicted values")
+    plt.fill_between(
+        graph_x[train_y.size :],
+        pred_y_lower,
+        pred_y_upper,
+        alpha=0.5,
+        label="Confidence",
+    )
+    plt.legend()
+    if is_save:
+        plt.savefig(f"sessions/{run_prefix}/figs/{save_filename}.png", dpi=600)
         plt.clf()
     else:
         plt.show()

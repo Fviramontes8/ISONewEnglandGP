@@ -17,7 +17,6 @@ from isonegp.session_generator import create_run_folder
 def main():
     # The year can change from 2011 to 2016
     new_england_load_demand_data = np.load("data/ISONE_CA_DEMAND_2011.npy")
-    print(new_england_load_demand_data.shape)
     # 16 days
     training_indices = 24 * 16
     # 4 days
@@ -46,9 +45,7 @@ def main():
         current_run_folder,
         "training_testing_data_fullview",
     )
-    pretrain_checks(
-        demand_training_data, demand_testing_data, current_run_folder
-    )
+    pretrain_checks(demand_training_data, demand_testing_data, current_run_folder)
 
     normalized_training_data = normalize(demand_training_data)
     normalized_testing_data = normalize(demand_testing_data)

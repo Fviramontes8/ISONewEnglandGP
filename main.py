@@ -4,11 +4,11 @@ from torch import linspace, Tensor
 from torch.optim import Adam
 
 from isonegp.gpmodel import GaussianProcess, CustomGPModel
-from isonegp.preprocess import pretrain_checks, normalize
+from isonegp.preprocess import pretrain_checks, normalize, denormalize
+from isonegp.postprocess import mape
 from isonegp.plot import (
     plot_cat_data,
     plot_data,
-    plot_overlapping_data,
     plot_gp_inference,
 )
 from isonegp.session_generator import create_run_folder
@@ -47,8 +47,8 @@ def main():
     )
     pretrain_checks(demand_training_data, demand_testing_data, current_run_folder)
 
-    normalized_training_data = normalize(demand_training_data)
-    normalized_testing_data = normalize(demand_testing_data)
+    normalized_training_data, train_mu, train_sigma = normalize(demand_training_data)
+    normalized_testing_data, _, _ = normalize(demand_testing_data)
     plot_cat_data(
         [normalized_training_data, normalized_testing_data],
         ["c", "m"],
@@ -84,7 +84,8 @@ def main():
         "train_y": gpmodel_params["train_y"],
     }
     model = GaussianProcess(**gp_params)
-    loss, noise = model.train(70, True)
+    debug_model = False
+    loss, noise = model.train(70, debug_model)
 
     plot_data(
         loss,
@@ -97,27 +98,23 @@ def main():
     )
 
     gp_pred = model(Tensor(normalized_testing_data))
-    plot_overlapping_data(
-        [gp_pred.mean.numpy(), normalized_testing_data],
-        "Trained model prediction v. testing data",
-        "Time (Hours)",
-        "Normalized MegaWatts",
-        b_save_figures,
-        current_run_folder,
-        "gp_pred_v_testing_data",
-    )
 
     lower, upper = gp_pred.confidence_region()
+    denorm_pred = denormalize(gp_pred.mean.numpy(), train_mu, train_sigma)
+    denorm_upper = denormalize(upper.numpy(), train_mu, train_sigma)
+    denorm_lower = denormalize(lower.numpy(), train_mu, train_sigma)
+
     plot_gp_inference(
-        normalized_training_data,
-        normalized_testing_data,
-        gp_pred.mean.numpy(),
-        lower.numpy(),
-        upper.numpy(),
+        demand_testing_data,
+        denorm_pred,
+        denorm_lower,
+        denorm_upper,
         b_save_figures,
         current_run_folder,
         "gp_inference",
     )
+    test_loss = mape(demand_testing_data, denorm_pred)
+    print(f"Test loss: {test_loss}")
 
 
 if __name__ == "__main__":

@@ -39,21 +39,24 @@ def pretrain_checks(
         **plot_args,
     )
 
-    plot_args["save_filename"] = (
-        f"{savefile_prefix}training_data_autocorrelation"
-    )
+    plot_args["save_filename"] = f"{savefile_prefix}training_data_autocorrelation"
     plot_autocorr(training, "Autocorrelation with training data", **plot_args)
 
-    plot_args["save_filename"] = (
-        f"{savefile_prefix}testing_data_autocorrelation"
-    )
+    plot_args["save_filename"] = f"{savefile_prefix}testing_data_autocorrelation"
     plot_autocorr(testing, "Autocorrelation with testing data", **plot_args)
 
 
-def normalize(raw_data: np.ndarray) -> np.ndarray:
+def normalize(raw_data: np.ndarray) -> (np.ndarray, float, float):
     normalized_data = raw_data.copy()
     mu = np.mean(normalized_data)
     sigma = np.std(normalized_data, mean=mu)
     for i in range(normalized_data.size):
         normalized_data[i] = (normalized_data[i] - mu) / sigma
-    return normalized_data
+    return normalized_data, mu, sigma
+
+
+def denormalize(normalized_data: np.ndarray, mu: float, sigma: float) -> np.ndarray:
+    denorm_data = np.zeros(normalized_data.size)
+    for i in range(normalized_data.size):
+        denorm_data[i] = (normalized_data[i] * sigma) + mu
+    return denorm_data

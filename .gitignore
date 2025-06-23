@@ -137,6 +137,6 @@ data_graphs/
 
 # Local files/folders
 data
-sessions
+runs
 Backup*
 old*

@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Dec 22 17:35:15 2020
-
-@author: Frankie
-"""
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -23,7 +16,7 @@ def plot_data(
     plt.xlabel(xtitle)
     plt.ylabel(ytitle)
     if is_save:
-        plt.savefig(f"sessions/{run_prefix}/figs/{save_filename}.png", dpi=600)
+        plt.savefig(f"runs/{run_prefix}/figs/{save_filename}.png", dpi=600)
         plt.clf()
     else:
         plt.show()
@@ -44,13 +37,15 @@ def plot_overlapping_data(
     plt.xlabel(xtitle)
     plt.ylabel(ytitle)
     if is_save:
-        plt.savefig(f"sessions/{run_prefix}/figs/{save_filename}.png", dpi=600)
+        plt.savefig(f"runs/{run_prefix}/figs/{save_filename}.png", dpi=600)
         plt.clf()
     else:
         plt.show()
 
 
-def plot_autocorr(data: np.ndarray, title: str = "Autocorrelation", **kwargs) -> None:
+def plot_autocorr(
+    data: np.ndarray, title: str = "Autocorrelation", **kwargs
+) -> None:
     self_corr = np.correlate(data, data, "full")
     plot_data(self_corr, title, **kwargs)
 
@@ -75,8 +70,7 @@ def plot_cat_data(
 ) -> None:
     assert len(data) == len(matplot_colors)
     assert len(matplot_colors) == len(legend_titles)
-    total_elems = sum([i.size for i in data])
-    # elems_range = [i for i in range(total_elems)]
+    total_elems = sum([len(i) for i in data])
     elems_range = np.linspace(0, total_elems - 1, total_elems)
     plt.ylabel(ytitle)
     plt.xlabel(xtitle)
@@ -89,14 +83,13 @@ def plot_cat_data(
         start += datum.size
     plt.legend()
     if is_save:
-        plt.savefig(f"sessions/{run_prefix}/figs/{save_filename}.png", dpi=600)
+        plt.savefig(f"runs/{run_prefix}/figs/{save_filename}.png", dpi=600)
         plt.clf()
     else:
         plt.show()
 
 
 def plot_gp_inference(
-    train_y: np.ndarray,
     test_y: np.ndarray,
     pred_y: np.ndarray,
     pred_y_lower: np.ndarray,
@@ -105,14 +98,15 @@ def plot_gp_inference(
     run_prefix: str = "",
     save_filename: str = "",
 ) -> None:
-    total_y_values = train_y.size + test_y.size
-    graph_x = np.linspace(0, total_y_values - 1, total_y_values)
+    assert test_y.size == pred_y.size
+    x_vals = np.linspace(0, pred_y.size, pred_y.size)
     plt.title("Inference on testing data")
-    plt.plot(graph_x[: train_y.size], train_y, "k", label="Training values")
-    plt.plot(graph_x[train_y.size :], test_y, "k-.", label="Testing values")
-    plt.plot(graph_x[train_y.size :], pred_y, "m", label="Predicted values")
+    plt.ylabel("MegaWatts")
+    plt.xlabel("Time after training data")
+    plt.plot(x_vals, test_y, "k-.", label="Testing values")
+    plt.plot(x_vals, pred_y, "m", label="Predicted values")
     plt.fill_between(
-        graph_x[train_y.size :],
+        x_vals,
         pred_y_lower,
         pred_y_upper,
         alpha=0.5,
@@ -120,7 +114,7 @@ def plot_gp_inference(
     )
     plt.legend()
     if is_save:
-        plt.savefig(f"sessions/{run_prefix}/figs/{save_filename}.png", dpi=600)
+        plt.savefig(f"runs/{run_prefix}/figs/{save_filename}.png", dpi=600)
         plt.clf()
     else:
         plt.show()

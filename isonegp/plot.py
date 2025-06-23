@@ -70,8 +70,7 @@ def plot_cat_data(
 ) -> None:
     assert len(data) == len(matplot_colors)
     assert len(matplot_colors) == len(legend_titles)
-    total_elems = sum([i.size for i in data])
-    # elems_range = [i for i in range(total_elems)]
+    total_elems = sum([len(i) for i in data])
     elems_range = np.linspace(0, total_elems - 1, total_elems)
     plt.ylabel(ytitle)
     plt.xlabel(xtitle)
@@ -91,7 +90,6 @@ def plot_cat_data(
 
 
 def plot_gp_inference(
-    train_y: np.ndarray,
     test_y: np.ndarray,
     pred_y: np.ndarray,
     pred_y_lower: np.ndarray,
@@ -100,14 +98,15 @@ def plot_gp_inference(
     run_prefix: str = "",
     save_filename: str = "",
 ) -> None:
-    total_y_values = train_y.size + test_y.size
-    graph_x = np.linspace(0, total_y_values - 1, total_y_values)
+    assert test_y.size == pred_y.size
+    x_vals = np.linspace(0, pred_y.size, pred_y.size)
     plt.title("Inference on testing data")
-    plt.plot(graph_x[: train_y.size], train_y, "k", label="Training values")
-    plt.plot(graph_x[train_y.size :], test_y, "k-.", label="Testing values")
-    plt.plot(graph_x[train_y.size :], pred_y, "m", label="Predicted values")
+    plt.ylabel("MegaWatts")
+    plt.xlabel("Time after training data")
+    plt.plot(x_vals, test_y, "k-.", label="Testing values")
+    plt.plot(x_vals, pred_y, "m", label="Predicted values")
     plt.fill_between(
-        graph_x[train_y.size :],
+        x_vals,
         pred_y_lower,
         pred_y_upper,
         alpha=0.5,

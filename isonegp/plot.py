@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Dec 22 17:35:15 2020
-
-@author: Frankie
-"""
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -23,7 +16,7 @@ def plot_data(
     plt.xlabel(xtitle)
     plt.ylabel(ytitle)
     if is_save:
-        plt.savefig(f"sessions/{run_prefix}/figs/{save_filename}.png", dpi=600)
+        plt.savefig(f"runs/{run_prefix}/figs/{save_filename}.png", dpi=600)
         plt.clf()
     else:
         plt.show()
@@ -44,13 +37,15 @@ def plot_overlapping_data(
     plt.xlabel(xtitle)
     plt.ylabel(ytitle)
     if is_save:
-        plt.savefig(f"sessions/{run_prefix}/figs/{save_filename}.png", dpi=600)
+        plt.savefig(f"runs/{run_prefix}/figs/{save_filename}.png", dpi=600)
         plt.clf()
     else:
         plt.show()
 
 
-def plot_autocorr(data: np.ndarray, title: str = "Autocorrelation", **kwargs) -> None:
+def plot_autocorr(
+    data: np.ndarray, title: str = "Autocorrelation", **kwargs
+) -> None:
     self_corr = np.correlate(data, data, "full")
     plot_data(self_corr, title, **kwargs)
 
@@ -89,7 +84,7 @@ def plot_cat_data(
         start += datum.size
     plt.legend()
     if is_save:
-        plt.savefig(f"sessions/{run_prefix}/figs/{save_filename}.png", dpi=600)
+        plt.savefig(f"runs/{run_prefix}/figs/{save_filename}.png", dpi=600)
         plt.clf()
     else:
         plt.show()
@@ -120,7 +115,7 @@ def plot_gp_inference(
     )
     plt.legend()
     if is_save:
-        plt.savefig(f"sessions/{run_prefix}/figs/{save_filename}.png", dpi=600)
+        plt.savefig(f"runs/{run_prefix}/figs/{save_filename}.png", dpi=600)
         plt.clf()
     else:
         plt.show()

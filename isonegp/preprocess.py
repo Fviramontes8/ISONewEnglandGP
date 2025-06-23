@@ -39,14 +39,10 @@ def pretrain_checks(
         **plot_args,
     )
 
-    plot_args["save_filename"] = (
-        f"{savefile_prefix}training_data_autocorrelation"
-    )
+    plot_args["save_filename"] = f"{savefile_prefix}training_data_autocorrelation"
     plot_autocorr(training, "Autocorrelation with training data", **plot_args)
 
-    plot_args["save_filename"] = (
-        f"{savefile_prefix}testing_data_autocorrelation"
-    )
+    plot_args["save_filename"] = f"{savefile_prefix}testing_data_autocorrelation"
     plot_autocorr(testing, "Autocorrelation with testing data", **plot_args)
 
 

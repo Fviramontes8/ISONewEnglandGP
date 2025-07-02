@@ -2,7 +2,7 @@ import numpy as np
 from .plot import plot_crosscorr, plot_autocorr
 
 
-def pretrain_checks(
+def linear_pretrain_checks(
     training: np.ndarray,
     testing: np.ndarray,
     run_folder: str,

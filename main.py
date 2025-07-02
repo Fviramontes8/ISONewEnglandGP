@@ -4,7 +4,7 @@ from torch import linspace, Tensor
 from torch.optim import Adam
 
 from isonegp.gpmodel import GaussianProcess, CustomGPModel
-from isonegp.preprocess import pretrain_checks, normalize, denormalize
+from isonegp.preprocess import linear_pretrain_checks, normalize, denormalize
 from isonegp.postprocess import mape
 from isonegp.plot import (
     plot_cat_data,
@@ -45,7 +45,7 @@ def main():
         current_run_folder,
         "training_testing_data_fullview",
     )
-    pretrain_checks(demand_training_data, demand_testing_data, current_run_folder)
+    linear_pretrain_checks(demand_training_data, demand_testing_data, current_run_folder)
 
     normalized_training_data, train_mu, train_sigma = normalize(demand_training_data)
     normalized_testing_data, _, _ = normalize(demand_testing_data)
@@ -62,7 +62,7 @@ def main():
     )
 
     normalized_filename_prefix = "normalized_"
-    pretrain_checks(
+    linear_pretrain_checks(
         normalized_training_data,
         normalized_testing_data,
         current_run_folder,

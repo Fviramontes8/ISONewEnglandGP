@@ -3,6 +3,7 @@ import numpy as np
 from torch import linspace, Tensor
 from torch.optim import Adam
 
+from isonegp.argparser import parse_arguments
 from isonegp.gpmodel import GaussianProcess, CustomGPModel
 from isonegp.preprocess import linear_pretrain_checks, normalize, denormalize
 from isonegp.postprocess import mape
@@ -14,26 +15,32 @@ from isonegp.plot import (
 from isonegp.session_generator import create_run_folder
 
 
-def main():
+def main(arg_parser):
+    args = arg_parser.parse_args()
+    print(args.window)
     # The year can change from 2011 to 2016
     new_england_load_demand_data = np.load("data/ISONE_CA_DEMAND_2011.npy")
-    # 16 days
-    training_indices = 24 * 16
-    # 4 days
-    testing_indices = 24 * 4
-    total_indices = training_indices + testing_indices
-
-    demand_training_data = np.array(
-        new_england_load_demand_data[:training_indices],
-    )
-    demand_testing_data = np.array(
-        new_england_load_demand_data[training_indices:total_indices]
-    )
     demand_description = "Non-PTF Load Demand"
     demand_units = "MegaWatts"
 
     current_run_folder = create_run_folder()
     b_save_figures = True
+
+    # 16 days
+    training_elements = 24 * 16
+    # 4 days
+    testing_elements = 24 * 4
+    total_elements = training_elements + testing_elements
+
+    # if args.window > 0:
+    # Window preprocessing goes here
+    #else:
+    demand_training_data = np.array(
+        new_england_load_demand_data[:training_elements],
+    )
+    demand_testing_data = np.array(
+        new_england_load_demand_data[training_elements:total_elements]
+    )
     plot_cat_data(
         [demand_training_data, demand_testing_data],
         ["c", "m"],
@@ -70,7 +77,7 @@ def main():
     )
 
     gpmodel_params = {
-        "train_x": linspace(0, training_indices - 1, training_indices),
+        "train_x": linspace(0, training_elements - 1, training_elements),
         "train_y": Tensor(normalized_training_data),
         "likelihood": GaussianLikelihood(),
     }
@@ -118,4 +125,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    arg_parser = parse_arguments()
+    main(arg_parser)

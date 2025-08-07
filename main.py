@@ -15,9 +15,7 @@ from isonegp.plot import (
 from isonegp.session_generator import create_run_folder
 
 
-def main(arg_parser):
-    args = arg_parser.parse_args()
-    print(args.window)
+def linear_main() -> None:
     # The year can change from 2011 to 2016
     new_england_load_demand_data = np.load("data/ISONE_CA_DEMAND_2011.npy")
     demand_description = "Non-PTF Load Demand"
@@ -32,9 +30,6 @@ def main(arg_parser):
     testing_elements = 24 * 4
     total_elements = training_elements + testing_elements
 
-    # if args.window > 0:
-    # Window preprocessing goes here
-    #else:
     demand_training_data = np.array(
         new_england_load_demand_data[:training_elements],
     )
@@ -124,6 +119,26 @@ def main(arg_parser):
     print(f"Test loss: {test_loss}")
 
 
+def window_main(window_size: int) -> None:
+    # The year can change from 2011 to 2016
+    new_england_load_demand_data = np.load("data/ISONE_CA_DEMAND_2011.npy")
+    demand_description = "Non-PTF Load Demand"
+    demand_units = "MegaWatts"
+
+    current_run_folder = create_run_folder()
+    b_save_figures = True
+
+    # 16 days
+    training_elements = 24 * 16
+    # 4 days
+    testing_elements = 24 * 4
+    total_elements = training_elements + testing_elements
+
+
 if __name__ == "__main__":
     arg_parser = parse_arguments()
-    main(arg_parser)
+    args = arg_parser.parse_args()
+    if args.window > 0:
+        window_main(args.window)
+    else:
+        linear_main()

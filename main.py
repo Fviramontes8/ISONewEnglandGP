@@ -3,8 +3,9 @@ import numpy as np
 from torch import linspace, Tensor
 from torch.optim import Adam
 
+from isonegp.argparser import parse_arguments
 from isonegp.gpmodel import GaussianProcess, CustomGPModel
-from isonegp.preprocess import pretrain_checks, normalize, denormalize
+from isonegp.preprocess import linear_pretrain_checks, normalize, denormalize
 from isonegp.postprocess import mape
 from isonegp.plot import (
     plot_cat_data,
@@ -14,26 +15,27 @@ from isonegp.plot import (
 from isonegp.session_generator import create_run_folder
 
 
-def main():
+def linear_main() -> None:
     # The year can change from 2011 to 2016
     new_england_load_demand_data = np.load("data/ISONE_CA_DEMAND_2011.npy")
-    # 16 days
-    training_indices = 24 * 16
-    # 4 days
-    testing_indices = 24 * 4
-    total_indices = training_indices + testing_indices
-
-    demand_training_data = np.array(
-        new_england_load_demand_data[:training_indices],
-    )
-    demand_testing_data = np.array(
-        new_england_load_demand_data[training_indices:total_indices]
-    )
     demand_description = "Non-PTF Load Demand"
     demand_units = "MegaWatts"
 
     current_run_folder = create_run_folder()
     b_save_figures = True
+
+    # 16 days
+    training_elements = 24 * 16
+    # 4 days
+    testing_elements = 24 * 4
+    total_elements = training_elements + testing_elements
+
+    demand_training_data = np.array(
+        new_england_load_demand_data[:training_elements],
+    )
+    demand_testing_data = np.array(
+        new_england_load_demand_data[training_elements:total_elements]
+    )
     plot_cat_data(
         [demand_training_data, demand_testing_data],
         ["c", "m"],
@@ -45,7 +47,7 @@ def main():
         current_run_folder,
         "training_testing_data_fullview",
     )
-    pretrain_checks(demand_training_data, demand_testing_data, current_run_folder)
+    linear_pretrain_checks(demand_training_data, demand_testing_data, current_run_folder)
 
     normalized_training_data, train_mu, train_sigma = normalize(demand_training_data)
     normalized_testing_data, _, _ = normalize(demand_testing_data)
@@ -62,7 +64,7 @@ def main():
     )
 
     normalized_filename_prefix = "normalized_"
-    pretrain_checks(
+    linear_pretrain_checks(
         normalized_training_data,
         normalized_testing_data,
         current_run_folder,
@@ -70,7 +72,7 @@ def main():
     )
 
     gpmodel_params = {
-        "train_x": linspace(0, training_indices - 1, training_indices),
+        "train_x": linspace(0, training_elements - 1, training_elements),
         "train_y": Tensor(normalized_training_data),
         "likelihood": GaussianLikelihood(),
     }
@@ -117,5 +119,30 @@ def main():
     print(f"Test loss: {test_loss}")
 
 
+def window_main(window_size: int) -> None:
+    # The year can change from 2011 to 2016
+    new_england_load_demand_data = np.load("data/ISONE_CA_DEMAND_2011.npy")
+    demand_description = "Non-PTF Load Demand"
+    demand_units = "MegaWatts"
+
+    current_run_folder = create_run_folder()
+    b_save_figures = True
+
+    # 16 days
+    training_elements = 24 * 16
+    # 4 days
+    testing_elements = 24 * 4
+    total_elements = training_elements + testing_elements
+    
+    raw_demand_data = new_england_load_demand_data[:total_elements]
+
+    # train_x, train_y, test_x, test_y = create_windowed_data(raw_demand_data)
+
+
 if __name__ == "__main__":
-    main()
+    arg_parser = parse_arguments()
+    args = arg_parser.parse_args()
+    if args.window > 0:
+        window_main(args.window)
+    else:
+        linear_main()

@@ -133,6 +133,10 @@ def window_main(window_size: int) -> None:
     # 4 days
     testing_elements = 24 * 4
     total_elements = training_elements + testing_elements
+    
+    raw_demand_data = new_england_load_demand_data[:total_elements]
+
+    # train_x, train_y, test_x, test_y = create_windowed_data(raw_demand_data)
 
 
 if __name__ == "__main__":

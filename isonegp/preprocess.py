@@ -60,3 +60,6 @@ def denormalize(normalized_data: np.ndarray, mu: float, sigma: float) -> np.ndar
     for i in range(normalized_data.size):
         denorm_data[i] = (normalized_data[i] * sigma) + mu
     return denorm_data
+
+def create_windowed_data(raw_data: np.ndarray):
+    pass
